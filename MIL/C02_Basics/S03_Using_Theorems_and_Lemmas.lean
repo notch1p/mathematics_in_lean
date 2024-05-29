@@ -44,7 +44,9 @@ example (x : ℝ) : x ≤ x :=
 
 -- Try this.
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e := by
-  sorry
+  apply lt_of_le_of_lt h₀
+  apply lt_trans h₁
+  apply lt_of_le_of_lt h₂ h₃
 
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e := by
   linarith
@@ -59,7 +61,7 @@ end
 example (h : 1 ≤ a) (h' : b ≤ c) : 2 + a + exp b ≤ 3 * a + exp c := by
   linarith [exp_le_exp.mpr h']
 
-#check (exp_le_exp : exp a ≤ exp b ↔ a ≤ b)
+#check (exp_le_exp : exp a ≤ exp b <-> a ≤ b)
 #check (exp_lt_exp : exp a < exp b ↔ a < b)
 #check (log_le_log : 0 < a → a ≤ b → log a ≤ log b)
 #check (log_lt_log : 0 < a → a < b → log a < log b)
@@ -86,21 +88,34 @@ example (h₀ : a ≤ b) (h₁ : c < d) : a + exp c + e < b + exp d + e := by
     apply exp_lt_exp.mpr h₁
   apply le_refl
 
-example (h₀ : d ≤ e) : c + exp (a + d) ≤ c + exp (a + e) := by sorry
+example (h₀ : d ≤ e) : c + exp (a + d) ≤ c + exp (a + e) := by
+  have h₁: c <= c := by apply le_refl
+  apply add_le_add h₁
+  apply exp_le_exp.mpr
+  apply add_le_add
+  · apply le_refl
+  exact h₀
 
 example : (0 : ℝ) < 1 := by norm_num
 
 example (h : a ≤ b) : log (1 + exp a) ≤ log (1 + exp b) := by
-  have h₀ : 0 < 1 + exp a := by sorry
+  have h₀ : 0 < 1 + exp a := by
+    apply add_pos
+    norm_num
+    apply exp_pos
   apply log_le_log h₀
-  sorry
+  apply add_le_add
+  · apply le_refl
+  apply exp_le_exp.mpr h
 
 example : 0 ≤ a ^ 2 := by
   -- apply?
   exact sq_nonneg a
 
 example (h : a ≤ b) : c - exp b ≤ c - exp a := by
-  sorry
+  apply tsub_le_tsub_left
+  apply exp_le_exp.mpr
+  exact h
 
 example : 2*a*b ≤ a^2 + b^2 := by
   have h : 0 ≤ a^2 - 2*a*b + b^2
@@ -120,8 +135,19 @@ example : 2*a*b ≤ a^2 + b^2 := by
     _ ≥ 0 := by apply pow_two_nonneg
   linarith
 
-example : |a*b| ≤ (a^2 + b^2)/2 := by
-  sorry
-
-#check abs_le'.mpr
-
+example : |a * b| ≤ (a ^ 2 + b ^ 2) / 2 := by
+  have h₀: (0: ℝ) < 2 := by linarith
+  apply abs_le'.mpr
+  constructor
+  · rw[le_div_iff h₀]
+    have h: 0 <= a ^ 2 - 2 * (a * b) + b ^ 2
+    calc
+      a ^ 2 - 2 * (a * b) + b ^ 2 = (a - b)^2 := by ring
+      _ >= 0 := by apply sq_nonneg
+    linarith
+  rw[le_div_iff h₀]
+  have h: 0 <= a^2 + 2 * (a * b) + b ^ 2
+  calc
+    a ^ 2 + 2 * (a * b) + b ^ 2 = (a + b)^2 := by ring
+    _ >= 0 := by apply sq_nonneg
+  linarith
