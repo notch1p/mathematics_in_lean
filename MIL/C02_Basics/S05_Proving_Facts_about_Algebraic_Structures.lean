@@ -36,22 +36,76 @@ variable (x y z : α)
 #check (sup_le : x ≤ z → y ≤ z → x ⊔ y ≤ z)
 
 example : x ⊓ y = y ⊓ x := by
-  sorry
+  apply le_antisymm
+  repeat
+    apply le_inf
+    · apply inf_le_right
+    apply inf_le_left
 
 example : x ⊓ y ⊓ z = x ⊓ (y ⊓ z) := by
-  sorry
+  apply le_antisymm
+  apply le_inf
+  · trans x ⊓ y
+    repeat
+      apply inf_le_left
+  apply le_inf
+  · trans x ⊓ y
+    apply inf_le_left
+    apply inf_le_right
+  apply inf_le_right
+  apply le_inf
+  · apply le_inf
+    apply inf_le_left
+    trans y ⊓ z
+    apply inf_le_right
+    apply inf_le_left
+  trans y ⊓ z
+  repeat
+    apply inf_le_right
+
+
+
 
 example : x ⊔ y = y ⊔ x := by
-  sorry
+  apply le_antisymm
+  repeat
+    apply sup_le
+    apply le_sup_right
+    apply le_sup_left
 
 example : x ⊔ y ⊔ z = x ⊔ (y ⊔ z) := by
-  sorry
+  apply le_antisymm
+  repeat apply sup_le
+  apply le_sup_left
+  · trans y ⊔ z
+    apply le_sup_left
+    apply le_sup_right
+  trans y ⊔ z
+  apply le_sup_right
+  apply le_sup_right
+  apply sup_le
+  trans x ⊔ y
+  repeat
+    apply le_sup_left
+  apply sup_le
+  trans x ⊔ y
+  apply le_sup_right
+  apply le_sup_left
+  apply le_sup_right
 
 theorem absorb1 : x ⊓ (x ⊔ y) = x := by
-  sorry
+  apply le_antisymm
+  apply inf_le_left
+  apply le_inf
+  rfl
+  apply le_sup_left
 
 theorem absorb2 : x ⊔ x ⊓ y = x := by
-  sorry
+  apply le_antisymm
+  apply sup_le
+  rfl
+  apply inf_le_left
+  apply le_sup_left
 
 end
 
@@ -70,10 +124,14 @@ variable {α : Type*} [Lattice α]
 variable (a b c : α)
 
 example (h : ∀ x y z : α, x ⊓ (y ⊔ z) = x ⊓ y ⊔ x ⊓ z) : a ⊔ b ⊓ c = (a ⊔ b) ⊓ (a ⊔ c) := by
-  sorry
+  rw[h, inf_comm (a ⊔ b), absorb1, inf_comm (a ⊔ b), h, <-sup_assoc, inf_comm c a, absorb2]
+  rw[inf_comm]
+
+
 
 example (h : ∀ x y z : α, x ⊔ y ⊓ z = (x ⊔ y) ⊓ (x ⊔ z)) : a ⊓ (b ⊔ c) = a ⊓ b ⊔ a ⊓ c := by
-  sorry
+  rw[h,sup_comm (a ⊓ b), absorb2,sup_comm (a ⊓ b), h, <-inf_assoc, sup_comm c a, absorb1]
+  rw[sup_comm]
 
 end
 
@@ -87,7 +145,9 @@ variable (a b c : R)
 #check (mul_nonneg : 0 ≤ a → 0 ≤ b → 0 ≤ a * b)
 
 example (h : a ≤ b) : 0 ≤ b - a := by
-  sorry
+  rw[<-sub_self a,sub_eq_add_neg,sub_eq_add_neg,add_comm,add_comm b]
+  apply add_le_add_left
+  exact h
 
 example (h: 0 ≤ b - a) : a ≤ b := by
   sorry
@@ -105,8 +165,14 @@ variable (x y z : X)
 #check (dist_comm x y : dist x y = dist y x)
 #check (dist_triangle x y z : dist x z ≤ dist x y + dist y z)
 
+#check (nonneg_of_mul_nonneg_left)
+
 example (x y : X) : 0 ≤ dist x y := by
-  sorry
+  have : 0 ≤ dist x y + dist x y := by
+    rw [<- dist_self x]
+    nth_rw 2 [dist_comm x y]
+    apply dist_triangle
+  linarith
+
 
 end
-
