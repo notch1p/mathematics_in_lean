@@ -11,3 +11,4 @@ package mil where
 lean_lib MIL where
 
 require mathlib from git "https://github.com/leanprover-community/mathlib4"@"v4.16.0"
+require Paperproof from git "https://github.com/Paper-Proof/paperproof.git"@"main"/"lean"
