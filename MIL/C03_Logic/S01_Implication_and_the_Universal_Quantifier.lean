@@ -1,6 +1,6 @@
 import MIL.Common
 import Mathlib.Data.Real.Basic
-
+import Paperproof
 namespace C03S01
 
 #check ∀ x : ℝ, 0 ≤ x → |x| = x
@@ -156,13 +156,21 @@ example (ef : FnEven f) (eg : FnEven g) : FnEven fun x ↦ f x + g x := by
 
 
 example (of : FnOdd f) (og : FnOdd g) : FnEven fun x ↦ f x * g x := by
-  sorry
+  intro x
+  simp
+  rw[of, og]
+  apply neg_mul_neg
 
 example (ef : FnEven f) (og : FnOdd g) : FnOdd fun x ↦ f x * g x := by
-  sorry
+  intro x
+  change f x * g x = - (f (-x) * g (-x))
+  rw[<-ef, og]
+  apply mul_neg
 
 example (ef : FnEven f) (og : FnOdd g) : FnEven fun x ↦ f (g x) := by
-  sorry
+  intro x
+  simp
+  rw [ef, og, neg_neg]
 
 end
 
@@ -177,7 +185,10 @@ example : s ⊆ s := by
 theorem Subset.refl : s ⊆ s := fun x xs ↦ xs
 
 theorem Subset.trans : r ⊆ s → s ⊆ t → r ⊆ t := by
-  sorry
+  intro r_s s_t ele e_r
+  apply s_t
+  apply r_s
+  exact e_r
 
 end
 
@@ -189,25 +200,36 @@ def SetUb (s : Set α) (a : α) :=
   ∀ x, x ∈ s → x ≤ a
 
 example (h : SetUb s a) (h' : a ≤ b) : SetUb s b :=
-  sorry
+  λ a' a'_in_s =>
+    let leUb := h a' a'_in_s
+    le_trans leUb h'
+
 
 end
 
 section
 
 open Function
-
 example (c : ℝ) : Injective fun x ↦ x + c := by
   intro x₁ x₂ h'
   exact (add_left_inj c).mp h'
 
 example {c : ℝ} (h : c ≠ 0) : Injective fun x ↦ c * x := by
-  sorry
+  intro a b h'
+  dsimp at h'
+  apply mul_right_inj' h |>.mp h'
 
 variable {α : Type*} {β : Type*} {γ : Type*}
 variable {g : β → γ} {f : α → β}
 
 example (injg : Injective g) (injf : Injective f) : Injective fun x ↦ g (f x) := by
-  sorry
+  intro _ _ h
+  simp at h
+  apply injg at h
+  apply injf at h
+  exact h
+
+theorem injcomp (injg : Injective g) (injf : Injective f) : Injective $ g ∘ f :=
+  λ _ _ h => h |> injg |> injf
 
 end
