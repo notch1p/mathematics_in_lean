@@ -1,5 +1,6 @@
 import MIL.Common
 import Mathlib.Data.Real.Basic
+import Paperproof
 
 namespace C03S03
 
@@ -10,6 +11,9 @@ example (h : a < b) : ¬b < a := by
   intro h'
   have : a < a := lt_trans h h'
   apply lt_irrefl a this
+
+example {p} : p -> ¬p -> 0 = 1
+  | p, np => False.elim (np p)
 
 def FnUb (f : ℝ → ℝ) (a : ℝ) : Prop :=
   ∀ x, f x ≤ a
@@ -33,10 +37,17 @@ example (h : ∀ a, ∃ x, f x > a) : ¬FnHasUb f := by
   linarith
 
 example (h : ∀ a, ∃ x, f x < a) : ¬FnHasLb f :=
-  sorry
+  λ ⟨a', f'lb⟩ =>
+    have ⟨a'', p⟩ := h a'
+    have np := not_lt_of_ge (f'lb a'')
+    show False from np p
 
 example : ¬FnHasUb fun x ↦ x :=
-  sorry
+  λ ⟨a, h⟩ =>
+    have : a + 1 > a := lt_add_one _
+    let p := h (a + 1)
+    let np := not_le_of_gt this
+    absurd p np
 
 #check (not_le_of_gt : a > b → ¬a ≤ b)
 #check (not_lt_of_ge : a ≥ b → ¬a < b)
@@ -44,20 +55,31 @@ example : ¬FnHasUb fun x ↦ x :=
 #check (le_of_not_gt : ¬a > b → a ≤ b)
 
 example (h : Monotone f) (h' : f a < f b) : a < b := by
-  sorry
+  apply lt_of_not_ge
+  intro h''
+  apply absurd h' (not_lt_of_ge (h h''))
+
 
 example (h : a ≤ b) (h' : f b < f a) : ¬Monotone f := by
-  sorry
+  intro hf
+  have h'' := hf h
+  apply absurd h' (not_lt_of_ge h'')
 
 example : ¬∀ {f : ℝ → ℝ}, Monotone f → ∀ {a b}, f a ≤ f b → a ≤ b := by
   intro h
   let f := fun x : ℝ ↦ (0 : ℝ)
-  have monof : Monotone f := by sorry
+  have monof : Monotone f := by
+    intro i j ilej
+    linarith
   have h' : f 1 ≤ f 0 := le_refl _
-  sorry
+  have : (1 : ℝ) <= 0 := h monof h'
+  linarith
 
 example (x : ℝ) (h : ∀ ε > 0, x < ε) : x ≤ 0 := by
-  sorry
+  apply le_of_not_gt
+  intro h'
+  let h'' := h x h'
+  linarith
 
 end
 
@@ -65,16 +87,24 @@ section
 variable {α : Type*} (P : α → Prop) (Q : Prop)
 
 example (h : ¬∃ x, P x) : ∀ x, ¬P x := by
-  sorry
+  intro x px
+  have : ∃ x, P x := ⟨x, px⟩
+  apply absurd this h
 
 example (h : ∀ x, ¬P x) : ¬∃ x, P x := by
-  sorry
+  rintro ⟨x, h'⟩
+  apply absurd h' (h x)
 
 example (h : ¬∀ x, P x) : ∃ x, ¬P x := by
-  sorry
+  push_neg at h
+  assumption
+
+#check Classical.byContradiction
 
 example (h : ∃ x, ¬P x) : ¬∀ x, P x := by
-  sorry
+  intro p
+  rcases h with ⟨w, h⟩
+  apply absurd (p w) h
 
 example (h : ¬∀ x, P x) : ∃ x, ¬P x := by
   by_contra h'
@@ -84,11 +114,14 @@ example (h : ¬∀ x, P x) : ∃ x, ¬P x := by
   by_contra h''
   exact h' ⟨x, h''⟩
 
+
 example (h : ¬¬Q) : Q := by
-  sorry
+  by_contra h'
+  apply h h'
 
 example (h : Q) : ¬¬Q := by
-  sorry
+  intro h'
+  solve_by_elim
 
 end
 
@@ -96,7 +129,12 @@ section
 variable (f : ℝ → ℝ)
 
 example (h : ¬FnHasUb f) : ∀ a, ∃ x, f x > a := by
-  sorry
+  intro x
+  dsimp only [FnHasUb, FnUb] at h
+  push_neg at h
+  by_contra h'
+  have _ := h x
+  solve_by_elim
 
 example (h : ¬∀ a, ∃ x, f x > a) : FnHasUb f := by
   push_neg at h
@@ -108,7 +146,9 @@ example (h : ¬FnHasUb f) : ∀ a, ∃ x, f x > a := by
   exact h
 
 example (h : ¬Monotone f) : ∃ x y, x ≤ y ∧ f y < f x := by
-  sorry
+  dsimp [Monotone] at h
+  push_neg at h
+  assumption
 
 example (h : ¬FnHasUb f) : ∀ a, ∃ x, f x > a := by
   contrapose! h
@@ -136,4 +176,3 @@ example (h : 0 < 0) : a > 37 := by
   contradiction
 
 end
-
