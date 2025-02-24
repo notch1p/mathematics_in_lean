@@ -23,7 +23,7 @@
 	".github": true
     },
     "editor.minimap.enabled": false,
-    "editor.acceptSuggestionOnEnter": "smart",
+    "editor.acceptSuggestionOnEnter": "on",
     "editor.quickSuggestions.comments": true,
     "scm.diffDecorationsGutterVisibility": "hover",
     "editor.semanticHighlighting.enabled": true,
