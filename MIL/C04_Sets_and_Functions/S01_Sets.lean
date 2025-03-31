@@ -75,8 +75,6 @@ example : s \ (t ∪ u) ⊆ (s \ t) \ u := by
   exact xntoru.1
   exact xntoru.2
 
-
-
 example : s ∩ t = t ∩ s := by
   ext x
   simp only [mem_inter_iff]
@@ -169,10 +167,6 @@ example : { n | Nat.Prime n } ∩ { n | n > 2 } ⊆ { n | ¬Even n } := by
   | inl h => apply (ne_of_lt ngt2).symm h |>.elim
   | inr h => apply Nat.odd_iff.mpr h
 
-#print Prime
-
-#print Nat.Prime
-
 example (n : ℕ) : Prime n ↔ Nat.Prime n :=
   Nat.prime_iff.symm
 
@@ -203,10 +197,14 @@ section
 variable (ssubt : s ⊆ t)
 
 example (h₀ : ∀ x ∈ t, ¬Even x) (h₁ : ∀ x ∈ t, Prime x) : ∀ x ∈ s, ¬Even x ∧ Prime x := by
-  sorry
+  intro x xins
+  have xint := ssubt xins
+  exact ⟨h₀ x xint, h₁ x xint⟩
 
 example (h : ∃ x ∈ s, ¬Even x ∧ Prime x) : ∃ x ∈ t, Prime x := by
-  sorry
+  rcases h with ⟨x, h₀, h₁, h₂⟩
+  have h₀ := ssubt h₀
+  use x, h₀
 
 end
 
@@ -245,7 +243,26 @@ example : (⋂ i, A i ∩ B i) = (⋂ i, A i) ∩ ⋂ i, B i := by
 
 
 example : (s ∪ ⋂ i, A i) = ⋂ i, A i ∪ s := by
-  sorry
+  ext x
+  simp only [mem_inter_iff, mem_iInter]
+  constructor <;> intro a
+  case h.mp =>
+    rcases a with h₁ | h₂
+    case inl => intro i; exact Or.inr h₁
+    next => simp [mem_iInter] at h₂; intro i; exact Or.inl $ h₂ i
+  case h.mpr =>
+    simp at *
+    by_cases xs : x ∈ s
+    case pos =>
+      left; exact xs
+    next =>
+      right; intro i; have a := a i
+      cases a with
+      | inl h => exact h
+      | inr h => exact xs h |>.elim
+
+
+
 
 def primes : Set ℕ :=
   { x | Nat.Prime x }
@@ -266,7 +283,13 @@ example : (⋂ p ∈ primes, { x | ¬p ∣ x }) ⊆ { x | x = 1 } := by
   apply Nat.exists_prime_and_dvd
 
 example : (⋃ p ∈ primes, { x | x ≤ p }) = univ := by
-  sorry
+  apply eq_univ_of_forall
+  intro x
+  have := Nat.exists_infinite_primes x
+  rcases this with ⟨p, h⟩
+  simp[primes]
+  use p
+  exact And.comm.mp h
 
 end
 
